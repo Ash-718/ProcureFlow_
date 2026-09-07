@@ -1,0 +1,38 @@
+# general
+.env
+*.env
+!.env.example
+uploads/
+database/pgdata/
+database/pglogs/
+database/.initpw
+
+# java
+backend/target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+HELP.md
+
+# node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# python
+ai-service/__pycache__/
+ai-service/**/__pycache__/
+ai-service/.venv/
+ai-service/*.egg-info/
+ai-service/.pytest_cache/
+
+# ide/os
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# local JDK toolchain (portable, not part of source)
+.tools/

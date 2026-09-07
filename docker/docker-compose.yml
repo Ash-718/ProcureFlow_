@@ -1,0 +1,75 @@
+# Brings up the full stack: PostgreSQL (schema + seed data auto-applied on
+# first boot), the AI service, the Spring Boot backend, and the frontend
+# (built and served via Nginx). Run from the repo root:
+#
+#   docker compose -f docker/docker-compose.yml up --build
+#
+# Then open http://localhost:8080 and log in with any account from the
+# README's "Demo Accounts" section.
+#
+# NOTE ON PGVECTOR: the reference spec calls for a pgvector-enabled Postgres
+# image. This project stores embeddings as plain `double precision[]` columns
+# and computes cosine similarity in the AI service instead (see
+# docs/ai-matching.md for why) — so a plain postgres image is enough here;
+# there is no pgvector extension to install.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: innovategov
+      POSTGRES_PASSWORD: innovategov_docker_pw
+      POSTGRES_DB: innovategov
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U innovategov -d innovategov"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ai-service:
+    build: ../ai-service
+    environment:
+      DATABASE_URL: postgresql+psycopg://innovategov:innovategov_docker_pw@postgres:5432/innovategov
+      EMBEDDING_PROVIDER: local
+      CORS_ALLOWED_ORIGIN: http://localhost:8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+
+  backend:
+    build: ../backend
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/innovategov
+      DATABASE_USER: innovategov
+      DATABASE_PASSWORD: innovategov_docker_pw
+      JWT_SECRET: change-this-secret-before-any-real-deployment-1234567890
+      AI_SERVICE_URL: http://ai-service:8081
+      CORS_ALLOWED_ORIGIN: http://localhost:8080
+      FILE_STORAGE_PATH: /uploads
+    volumes:
+      - uploads:/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    ports:
+      - "8001:8001"
+
+  frontend:
+    build: ../frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  pgdata:
+  uploads:
