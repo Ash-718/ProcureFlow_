@@ -50,7 +50,7 @@ export function LoginPage() {
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600 text-white">
             <Building2 className="h-6 w-6" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900">INNOVATE-GOV</h1>
+          <h1 className="text-xl font-bold text-slate-900">ProcureFlow</h1>
           <p className="text-sm text-slate-500">AI-powered innovation procurement platform · SIH26136</p>
         </div>
 

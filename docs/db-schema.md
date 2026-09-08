@@ -33,7 +33,7 @@ challenges ──< pilots >── startups
 documents (polymorphic: owner_type/owner_id → STARTUP|PROPOSAL)
 notifications >── users
 audit_logs >── users (actor, nullable)
-ai_matching_config (standalone config table, read by the AI service)
+ai_matching_config (standalone config table, read by the backend)
 ```
 
 ## Table-by-table notes
@@ -129,7 +129,7 @@ ai_matching_config (standalone config table, read by the AI service)
 
 ### AI config
 - **ai_matching_config**: `(config_key, weight, description)` rows mirroring
-  the weights in `ai-service/app/core/config.py` — kept here so the *documented*
+  the weights in `backend/app/core/config.py` — kept here so the *documented*
   default weights are visible directly in the database, independent of
   whichever environment variables happen to override them at runtime.
 

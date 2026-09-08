@@ -9,7 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Badge } from "@/components/ui/badge"
 import { ErrorState, LoadingState } from "@/components/ui/state-views"
-import { MatchCandidateCard, type NormalizedMatch } from "@/components/match-candidate-card"
+import {
+  MatchCandidateCard,
+  MatchingSummary,
+  type NormalizedMatch,
+} from "@/components/match-candidate-card"
 import { StartupProfileDialog } from "@/components/startup-profile-dialog"
 import { PilotCreateDialog } from "@/components/pilot-create-dialog"
 import { formatCurrencyInr, formatDate } from "@/lib/utils"
@@ -30,6 +34,10 @@ export function GovChallengeDetailPage() {
 
   const [matches, setMatches] = useState<NormalizedMatch[] | null>(null)
   const [matchProvider, setMatchProvider] = useState<string | null>(null)
+  // Returned by the run endpoint: how many startups were actually scored,
+  // as opposed to how many are shown. Null when results were read back from
+  // storage, since the stored rows do not carry the field.
+  const [analysedCount, setAnalysedCount] = useState<number | null>(null)
   const [matching, setMatching] = useState(false)
   const [matchError, setMatchError] = useState<string | null>(null)
 
@@ -71,6 +79,7 @@ export function GovChallengeDetailPage() {
         }))
       )
       setMatchProvider(response.aiProvider)
+      setAnalysedCount(response.totalCandidatesConsidered)
       setChallenge((c) => (c ? { ...c, status: "MATCHING" } : c))
     } catch (err) {
       setMatchError(apiErrorMessage(err))
@@ -188,7 +197,9 @@ export function GovChallengeDetailPage() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <div>
               <CardTitle className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-brand-500" /> AI Startup Matching</CardTitle>
-              {matchProvider && <p className="text-xs text-slate-400">AI provider: {matchProvider}</p>}
+              <p className="text-xs text-slate-500">
+                Scores every startup on the platform against this challenge.
+              </p>
             </div>
             <Button onClick={runMatching} disabled={matching}>
               {matching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -198,6 +209,13 @@ export function GovChallengeDetailPage() {
           <CardContent className="space-y-4">
             {matching && <LoadingState label="AI is scoring every startup against this challenge…" />}
             {matchError && <ErrorState message={matchError} onRetry={runMatching} />}
+            {!matching && !matchError && matches !== null && matches.length > 0 && (
+              <MatchingSummary
+                analysed={analysedCount}
+                shown={matches.length}
+                provider={matchProvider}
+              />
+            )}
             {!matching && !matchError && matches === null && (
               <p className="py-6 text-center text-sm text-slate-400">
                 Click "Find Suitable Startups" to run the AI matching pipeline against the startup database.

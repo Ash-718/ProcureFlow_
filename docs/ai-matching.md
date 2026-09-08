@@ -1,6 +1,6 @@
 # AI Matching Methodology
 
-This is the centerpiece of INNOVATE-GOV: turning a published challenge into a
+This is the centerpiece of ProcureFlow: turning a published challenge into a
 ranked, explained list of candidate startups. This document describes exactly
 how it works — the pipeline, the formula, the fallback strategy, and the
 engineering decisions made where the reference spec left something open.
@@ -24,7 +24,7 @@ Store in challenges.embedding    Store in startups.embedding
 Government clicks "Find Suitable Startups"
       │
       ▼
-Backend calls ai-service: POST /api/v1/ai/match/{challenge_id}
+Router calls app.ai.run_matching_for_challenge() in-process
       │
       ▼
 For every startup:
@@ -47,7 +47,7 @@ scoring, so a stale/missing embedding never blocks a match. This is the
 
 ## 2. Text representations
 
-**Challenge** (`ai-service/app/services/text_builders.py::build_challenge_text`):
+**Challenge** (`backend/app/ai/text_builders.py::build_challenge_text`):
 
 ```
 Challenge: <title>
@@ -83,7 +83,7 @@ overall_score =
 ```
 
 All components and the overall score are reported on a 0-100 scale. Weights
-live in `ai-service/app/core/config.py` (env-overridable:
+live in `backend/app/core/config.py` (env-overridable:
 `WEIGHT_SEMANTIC_SIMILARITY`, etc.) and are also recorded in
 `database/schema.sql`'s `ai_matching_config` table for transparency/audit —
 the API's `/api/v1/ai/match/{id}` response and `/health` endpoint both report
@@ -94,11 +94,11 @@ the active weights, so nothing about the score is hidden from the caller.
 Cosine similarity between the challenge and startup embedding vectors,
 clamped to `[0, 1]` (a negative cosine similarity contributes 0, not a
 penalty below zero — see `RecommendationCalculator`-style clamping in
-`ai-service/app/services/scoring.py::compute_overall_score`).
+`backend/app/ai/scoring.py::compute_overall_score`).
 
 ### 3.2 Technology match (20%)
 
-`ai-service/app/services/scoring.py::compute_technology_match`. The
+`backend/app/ai/scoring.py::compute_technology_match`. The
 challenge's `desired_technology` field is a comma-separated string; each term
 is matched (case-insensitive, substring-tolerant in either direction) against
 the startup's capability `technology_tag`s. A matched term contributes its
@@ -138,7 +138,7 @@ Section 6 of this doc), normalized to `[0, 1]`.
 
 ## 4. Explanations
 
-`ai-service/app/services/explanations.py::build_match_explanation` turns the
+`backend/app/ai/explanations.py::build_match_explanation` turns the
 component scores into 2-4 "reasons" and 0-2 "gaps" — purely template-driven
 from the actual numbers (which technologies matched/didn't, whether the
 domain match came from a capability or a project, whether there's government
@@ -156,7 +156,7 @@ Two abstractions, each with a local (offline) and an LLM-backed implementation:
 | `EmbeddingProvider` | `sentence-transformers` `all-MiniLM-L6-v2`, runs on CPU, no API key, no network call | OpenAI-compatible `/embeddings` endpoint |
 | `TextGenerationProvider` | Returns the template text unchanged | Polishes the template draft into flowing prose via an OpenAI-compatible `/chat/completions` call |
 
-Selection is via `EMBEDDING_PROVIDER=local|llm` (`ai-service/.env`). If set to
+Selection is via `EMBEDDING_PROVIDER=local|llm` (`backend/.env`). If set to
 `llm` but `LLM_API_KEY` is missing, the service logs a warning and **silently
 falls back to local** — a missing key never crashes a request. Every match
 response includes `"ai_provider"` so the frontend/judge can see which path
@@ -167,7 +167,7 @@ Match explanations are deliberately **not** run through the LLM polish step —
 they're structured (reasons/gaps arrays) for the UI's bullet-list rendering,
 and deterministic template text serves that better than paraphrased prose.
 The LLM polish path is exercised on the **proposal AI-assist summary**
-instead (`ai-service/app/services/proposal_analysis.py`), where flowing prose
+instead (`backend/app/ai/proposal_analysis.py`), where flowing prose
 is actually what an expert evaluator wants to read.
 
 ## 6. Deliberate deviations from the reference spec (and why)

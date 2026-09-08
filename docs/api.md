@@ -21,8 +21,8 @@ the `STARTUP` account that owns the resource — `ADMIN` can access anything.
 }
 ```
 
-`fieldErrors` is only present for Bean Validation failures (400s from a
-malformed request body).
+`fieldErrors` is only present for request-validation failures (400s from a
+malformed request body), keyed by field name.
 
 ---
 

@@ -1,4 +1,4 @@
-# INNOVATE-GOV — SIH26136
+# ProcureFlow — SIH26136
 
 An AI-powered innovation procurement platform for the Government of
 Maharashtra: it converts government problems into structured, KPI-bearing
@@ -23,9 +23,9 @@ Recommendation → Knowledge Base of Past Pilots.
 ## Architecture at a glance
 
 ```
-React (Vite/TS/Tailwind) ──▶ Spring Boot backend ──▶ FastAPI AI service
-                                     │                        │
-                                     └────────▶ PostgreSQL ◀──┘
+React (Vite/TS/Tailwind) ──▶ FastAPI backend ──▶ PostgreSQL
+                                   │
+                                   └── AI matching runs in-process (backend/app/ai/)
 ```
 
 Full detail: [`docs/architecture.md`](docs/architecture.md) ·
@@ -40,10 +40,10 @@ formula and every deliberate deviation from the reference spec.
 | Layer | Choice |
 |---|---|
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, Radix UI primitives, Recharts, React Router |
-| Backend | Spring Boot 3.5 (Java 21), Spring Security (JWT), Spring Data JPA, Hibernate |
-| AI service | FastAPI, sentence-transformers (`all-MiniLM-L6-v2`), numpy, SQLAlchemy |
+| Backend | FastAPI, SQLAlchemy 2, Pydantic v2, uvicorn (Python 3.10/3.11) |
+| AI | sentence-transformers (`all-MiniLM-L6-v2`), numpy — runs in-process inside the backend (`backend/app/ai/`) |
 | Database | PostgreSQL 17 |
-| Auth | JWT (HS256), bcrypt password hashing |
+| Auth | JWT (HMAC-SHA, algorithm derived from secret length), bcrypt password hashing |
 
 ## Two important engineering decisions (read before running)
 
@@ -51,32 +51,43 @@ formula and every deliberate deviation from the reference spec.
    build environment had no Docker and no working MSVC build toolchain to
    compile the extension, and no pre-built Windows binary exists for it.
    Embeddings are stored as plain `double precision[]` columns; cosine
-   similarity is computed in the AI service with numpy — real, exact,
+   similarity is computed in the backend with numpy — real, exact,
    reproducible math, just without an ANN index (which only matters at a much
    larger scale than this seed dataset). Full rationale in
    [`docs/ai-matching.md`](docs/ai-matching.md#6-deliberate-deviations-from-the-reference-spec-and-why).
-2. **Backend needs a JDK 21 toolchain specifically**, even if a newer JDK is
-   installed system-wide. Lombok 1.18.38 (latest release as of this build)
-   silently fails to run its annotation processor under JDK 25 — no error,
-   just missing getters/setters, which then fails compilation with confusing
-   "cannot find symbol" errors. If `java -version` on your machine reports 25
-   (or anything Lombok doesn't yet support), grab a JDK 21 and point
-   `JAVA_HOME` at it before running Maven — see `backend/dev-env.sh` /
-   `backend/dev-env.ps1`, which do exactly this against a portable JDK
-   already unzipped under `.tools/` in this repo.
+2. **The backend is Python, and the AI runs inside it.** The project began on
+   Spring Boot with a separate FastAPI AI service; both were migrated to a
+   single FastAPI backend, with the matching pipeline moved in-process to
+   `backend/app/ai/`. The weighted formula, the `all-MiniLM-L6-v2` embeddings
+   and the deterministic explanations are unchanged — `scoring.py` and
+   `text_builders.py` moved byte-for-byte. That removed a process, a port and
+   an HTTP hop from every match. The migration record is in
+   [`docs/migration-plan.md`](docs/migration-plan.md).
 
 ## Running everything
 
-### Option A — Docker Compose (recommended if you have Docker)
+### Option A — Local development (no Docker)
+
+Three processes: PostgreSQL, the FastAPI backend, and the Vite dev server.
+This is what the project is built and demonstrated against; Docker is not
+required. Full steps below.
+
+### Option B — Docker Compose (deployment)
 
 ```bash
 docker compose -f docker/docker-compose.yml up --build
 ```
 
-This starts Postgres (schema + seed data applied automatically), the AI
-service, the backend, and the frontend. Open **http://localhost:8080**.
+Three containers — `postgres` (schema + seed data applied automatically on
+first boot), `backend` (FastAPI, with the AI model baked into the image), and
+`frontend` (the built React app served by Nginx, which proxies `/api` to the
+backend). Open **http://localhost:8080**.
 
-### Option B — Native (no Docker), what this project was actually built against
+Docker is for deployment. It is not needed for local development, and this
+build environment has no Docker installed, so the compose stack is maintained
+but has not been built here.
+
+### Local development steps — what this project was actually built against
 
 **1. Database.** Any PostgreSQL 17 works; the commands below spin up an
 isolated instance dedicated to this project so nothing on your machine's
@@ -98,33 +109,24 @@ psql -h 127.0.0.1 -p 5433 -U innovategov -d innovategov -f database/schema.sql
 psql -h 127.0.0.1 -p 5433 -U innovategov -d innovategov -f database/seed.sql
 ```
 
-**2. AI service** (Python 3.10/3.11 — avoid brand-new Python releases until
+**2. Backend** (Python 3.10/3.11 — avoid brand-new Python releases until
 numpy/torch have published wheels for them):
 
 ```bash
-cd ai-service
+cd backend
 python -m venv .venv
 ./.venv/Scripts/activate        # Windows; `source .venv/bin/activate` on macOS/Linux
 pip install -r requirements.txt
 cp .env.example .env            # defaults already point at the local DB above
-uvicorn app.main:app --host 127.0.0.1 --port 8081
+uvicorn app.main:app --reload --port 8000
 ```
 
-Runs on **http://localhost:8081**.
+Runs on **http://localhost:8000**. The AI matching pipeline runs inside this
+process — there is no separate AI service to start. The embedding model loads
+on a background thread at startup, so the first matching request does not pay
+the cold-start cost.
 
-**3. Backend** (needs JDK 21 — see above):
-
-```bash
-cd backend
-source dev-env.sh   # or: . .\dev-env.ps1   (PowerShell)
-mvn spring-boot:run
-```
-
-Runs on **http://localhost:8001**. (Note: port 8080 is already in use by
-something else on this machine — a system Oracle listener — which is why
-neither service defaults to 8080; override with `SERVER_PORT` if needed.)
-
-**4. Frontend:**
+**3. Frontend:**
 
 ```bash
 cd frontend
@@ -136,6 +138,9 @@ Runs on **http://localhost:5173** (Vite falls back to 5174/5175/... if that
 port is taken by another local project — the backend's CORS config already
 allows a few fallback ports out of the box; see `CORS_ALLOWED_ORIGIN` in
 `backend/.env.example` if you need to add another one).
+
+The Vite dev server proxies `/api` to the backend on :8000. Override with
+`VITE_API_PROXY_TARGET` in `frontend/.env` if you run the backend elsewhere.
 
 ## Demo accounts
 
@@ -158,7 +163,9 @@ ranking rather than every startup scoring ~90%.
 
 ## Judge demo script (~5-7 minutes)
 
-1. **Login as Government.** See the seeded challenges list.
+1. **Login as Government.** The dashboard opens on what needs attention —
+   active challenges, proposals to review, pilots, and any decision
+   outstanding — above the procurement lifecycle rail.
 2. Open **"AI-Based Pothole & Road Damage Detection System"** — walk through
    its problem statement, KPIs, and eligibility requirements.
 3. Click **"Find Suitable Startups"** — this is a live AI computation, not a
@@ -169,24 +176,26 @@ ranking rather than every startup scoring ~90%.
    Sensors capability).
 5. Optionally, create a **new challenge** via "New Challenge" to show the
    Problem-to-Challenge Converter and the "similar past pilots" AI lookup.
-6. **Login as Startup** (`startup@demo.com`) — show its profile and its
-   already-submitted proposal for the pothole challenge.
+6. **Login as Startup** (`startup@demo.com`) — the dashboard shows open
+   opportunities, proposal status and profile completeness; open the company
+   profile to show the capabilities the AI matches on.
 7. **Login as Expert** — open the evaluation queue, show the AI-assisted
    analysis alongside the manual scoring rubric, submit an evaluation.
 8. **Back as Government** — shortlist the proposal, create a pilot with
    milestones and KPI targets.
 9. Open an already-**completed** pilot (seeded: CleanLoop Robotics / Digital
-   Waste Segregation) to show the KPI tracking, the generated SCALE
-   recommendation with its cost/performance/impact breakdown and rationale,
-   and the recorded human final decision.
+   Waste Segregation) to show KPI target-vs-actual, the milestone timeline,
+   and the Scale/Modify/Reject panel — where the **system recommendation** and
+   the **human decision** are shown side by side as separate records. This is
+   the clearest statement of the product's position: the engine advises, the
+   department decides.
 10. **Login as Admin** — show user management, audit logs, and the
     cross-department Knowledge Base of past pilots (1 scaled, 1 rejected in
     the seed data) with domain/technology/outcome search.
 
 ## Environment variables
 
-See `.env.example` in each service directory (`backend/`, `ai-service/`,
-`frontend/`). Every value has a working local-dev default, so nothing needs
+See `.env.example` in `backend/` and `frontend/`. Every value has a working local-dev default, so nothing needs
 to be set to run the app locally — the `.env.example` files exist to
 document what *can* be overridden (and are required for a real deployment,
 e.g. `JWT_SECRET`).
@@ -194,23 +203,28 @@ e.g. `JWT_SECRET`).
 ## Testing
 
 ```bash
-# AI service — matching formula unit tests (15 tests)
-cd ai-service && ./.venv/Scripts/python.exe -m pytest tests/ -v
-
-# Backend — recommendation engine, evaluation scoring, validation, and a full
-# RBAC/auth integration suite run against a real (seeded) database (32 tests)
-cd backend && source dev-env.sh && mvn test
+cd backend
+./.venv/Scripts/python.exe -m pytest tests/          # Windows
+# .venv/bin/python -m pytest tests/                  # macOS / Linux
 ```
 
-The backend's `AuthRbacIntegrationTest` boots the full Spring context against
-the live local database rather than an in-memory substitute, because the
-schema leans on native Postgres enum/array/jsonb types that an H2
-compatibility mode doesn't faithfully emulate — so the dev database must be
-running (as it would be for any other local development) for that suite to pass.
+Covers the API contract, security and RBAC, the AI matching pipeline, the
+recommendation engine, and end-to-end workflow integration.
+
+Two things to know before running it:
+
+- **The suite runs against the real seeded database**, because the schema
+  leans on native Postgres enum/array/jsonb types that an in-memory substitute
+  does not faithfully emulate. So PostgreSQL must be running, as it would be
+  for any other local development. Tests that create rows tag them and clean
+  up, and a session-scoped fixture purges anything an interrupted run left
+  behind.
+- **Run it sequentially, never in parallel.** Two concurrent pytest processes
+  share one database and corrupt each other's state.
 
 ## Implemented features
 
-- Full JWT auth + RBAC across 4 roles, enforced server-side (`@PreAuthorize`)
+- Full JWT auth + RBAC across 4 roles, enforced server-side (role dependencies + ownership checks)
   and mirrored client-side (route guards)
 - Problem-to-Challenge Converter: structured challenges with typed
   requirements and weighted KPIs, draft/publish lifecycle
@@ -248,9 +262,9 @@ running (as it would be for any other local development) for that suite to pass.
   a small, additive schema change.
 - **Cost-efficiency in the recommendation engine is a schedule-adherence
   proxy** (fraction of milestones completed without delay), not a real
-  actual-vs-budgeted cost ledger — documented in `RecommendationCalculator`'s
-  Javadoc. A future iteration could add per-milestone budgeted-vs-actual
-  cost tracking.
+  actual-vs-budgeted cost ledger — documented in
+  `backend/app/services/recommendation_calculator.py`. A future iteration
+  could add per-milestone budgeted-vs-actual cost tracking.
 - **Rate limiting is in-memory/per-instance** — fine for this single-instance
   deployment, would need Redis (or a gateway) for a multi-instance one.
 - **Document verification is rule-based**, not an ML/OCR content classifier —
@@ -258,6 +272,14 @@ running (as it would be for any other local development) for that suite to pass.
   verification" is satisfied by real, explainable automated checks without
   overreaching into a model that wasn't asked for.
 - **LLM provider path is implemented but untested against a real key** in
-  this environment (no key was available) — the local fallback path is what
-  was actually built and demoed against throughout, and is what the AI
-  service defaults to.
+  this environment (no key was available) — the local `all-MiniLM-L6-v2` path
+  is what was actually built and demoed against throughout, and is the
+  default.
+- **`SimilarPilotMatch.pilotId` carries the knowledge-base entry id**, not the
+  pilot id — an inherited defect from the original AI service, retained
+  deliberately so the migration stayed behaviour-preserving. Nothing in the UI
+  navigates by that field. Fixing it is a small, deliberate API change.
+- **The Docker stack has not been built or run here** — this machine has no
+  Docker installed. The compose file, both Dockerfiles and the Nginx config
+  are maintained and statically validated, but the containers are unverified.
+  Local development needs no Docker.

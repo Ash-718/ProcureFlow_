@@ -1,70 +1,148 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
+import { Loader2 } from "lucide-react"
 import { AdminApi } from "@/api/endpoints"
 import { apiErrorMessage } from "@/api/client"
 import type { AdminUser } from "@/types"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ErrorState, LoadingState } from "@/components/ui/state-views"
+import { PageHeader } from "@/components/ui/page-header"
+import { DataTable, TableSkeleton, type Column } from "@/components/ui/data-table"
+import { EmptyState, ErrorState } from "@/components/ui/state-views"
+import { ROLE_LABEL } from "@/components/layout/nav-config"
 import { formatDate } from "@/lib/utils"
 
+/**
+ * Account administration.
+ *
+ * Same two endpoints as before. What changed: the hand-rolled table is now the
+ * shared `DataTable` (so it scrolls rather than overflowing the page on
+ * mobile, and secondary columns drop out below `md`), the activate/deactivate
+ * action reports failures instead of silently swallowing them, and the button
+ * shows its pending state.
+ */
 export function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [pendingId, setPendingId] = useState<string | null>(null)
 
-  function load() {
+  const load = useCallback(() => {
     setError(null)
     setUsers(null)
-    AdminApi.listUsers().then(setUsers).catch((e) => setError(apiErrorMessage(e)))
-  }
-  useEffect(load, [])
+    AdminApi.listUsers()
+      .then(setUsers)
+      .catch((err) => setError(apiErrorMessage(err)))
+  }, [])
+
+  useEffect(load, [load])
 
   async function toggleActive(user: AdminUser) {
-    const updated = await AdminApi.setActive(user.id, !user.active)
-    setUsers((prev) => prev?.map((u) => (u.id === user.id ? updated : u)) ?? null)
+    setActionError(null)
+    setPendingId(user.id)
+    try {
+      const updated = await AdminApi.setActive(user.id, !user.active)
+      setUsers(
+        (previous) =>
+          previous?.map((candidate) => (candidate.id === user.id ? updated : candidate)) ?? null,
+      )
+    } catch (err) {
+      // Previously this rejection was unhandled, so a failed change left the
+      // row looking unchanged with no explanation.
+      setActionError(apiErrorMessage(err))
+    } finally {
+      setPendingId(null)
+    }
   }
 
-  if (error) return <ErrorState message={error} onRetry={load} />
-  if (!users) return <LoadingState label="Loading users…" />
+  const columns: Column<AdminUser>[] = [
+    {
+      header: "Name",
+      cell: (row) => <span className="font-medium text-slate-900">{row.fullName}</span>,
+    },
+    {
+      header: "Email",
+      cell: (row) => <span className="text-slate-600">{row.email}</span>,
+      hideOnMobile: true,
+    },
+    {
+      header: "Role",
+      cell: (row) => <Badge variant="brand">{ROLE_LABEL[row.role]}</Badge>,
+    },
+    {
+      header: "Joined",
+      cell: (row) => formatDate(row.createdAt),
+      className: "whitespace-nowrap text-slate-500",
+      hideOnMobile: true,
+    },
+    {
+      header: "Status",
+      cell: (row) => (
+        <Badge variant={row.active ? "success" : "danger"}>
+          {row.active ? "Active" : "Deactivated"}
+        </Badge>
+      ),
+    },
+    {
+      header: "Access",
+      className: "text-right",
+      cell: (row) => (
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={pendingId === row.id}
+          onClick={() => toggleActive(row)}
+          aria-label={`${row.active ? "Deactivate" : "Activate"} ${row.fullName}`}
+        >
+          {pendingId === row.id ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : row.active ? (
+            "Deactivate"
+          ) : (
+            "Activate"
+          )}
+        </Button>
+      ),
+    },
+  ]
+
+  const header = (
+    <PageHeader
+      title="Accounts"
+      description="Every account on the platform. Deactivating an account takes effect on its next request."
+      meta={
+        users && (
+          <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-medium tabular-nums text-slate-600">
+            {users.length} accounts
+          </span>
+        )
+      }
+    />
+  )
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        {header}
+        <ErrorState message={error} onRetry={load} />
+      </div>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Users</h1>
-        <p className="text-sm text-slate-500">{users.length} accounts across all roles.</p>
-      </div>
-
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-              <th className="p-4">Name</th>
-              <th className="p-4">Email</th>
-              <th className="p-4">Role</th>
-              <th className="p-4">Joined</th>
-              <th className="p-4">Status</th>
-              <th className="p-4"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-slate-100 last:border-0">
-                <td className="p-4 font-medium text-slate-800">{u.fullName}</td>
-                <td className="p-4 text-slate-600">{u.email}</td>
-                <td className="p-4"><Badge variant="brand">{u.role}</Badge></td>
-                <td className="p-4 text-slate-500">{formatDate(u.createdAt)}</td>
-                <td className="p-4">
-                  <Badge variant={u.active ? "success" : "danger"}>{u.active ? "Active" : "Deactivated"}</Badge>
-                </td>
-                <td className="p-4">
-                  <Button size="sm" variant="outline" onClick={() => toggleActive(u)}>
-                    {u.active ? "Deactivate" : "Activate"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-5">
+      {header}
+      {actionError && <ErrorState message={actionError} />}
+      {!users ? (
+        <TableSkeleton rows={8} columns={6} />
+      ) : (
+        <DataTable
+          columns={columns}
+          rows={users}
+          keyOf={(row) => row.id}
+          caption="Platform user accounts"
+          empty={<EmptyState title="No accounts found" />}
+        />
+      )}
     </div>
   )
 }
