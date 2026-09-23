@@ -1,0 +1,184 @@
+{
+  "challenge_id": "68dbd66f-e465-457e-95d2-f84f3bb08c89",
+  "ai_provider": "local-fallback",
+  "weights": {
+    "semantic_similarity": 0.35,
+    "technology_match": 0.2,
+    "domain_match": 0.15,
+    "experience_score": 0.15,
+    "readiness_score": 0.15
+  },
+  "total_candidates_considered": 16,
+  "results": [
+    {
+      "startup_id": "eac7a065-c870-4240-8b2f-fe3579f4576e",
+      "company_name": "RoadSense AI",
+      "rank": 1,
+      "overall_score": 79.086,
+      "component_scores": {
+        "semantic_similarity": 76.674,
+        "technology_match": 70.0,
+        "domain_match": 100.0,
+        "experience_score": 70.0,
+        "readiness_score": 85.0
+      },
+      "reasons": [
+        "The startup's stated capabilities and past work closely match the problem statement in overall meaning, not just keywords.",
+        "Covers 3 of 4 desired technologies: Computer Vision, GIS Mapping, Deep Learning.",
+        "Core capability directly tagged in the 'smart-mobility' domain.",
+        "Prior government-sector deployment in this exact domain (Pothole Detection Pilot \u2014 Pune Municipal Corporation)."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: IoT Sensors."
+      ]
+    },
+    {
+      "startup_id": "7591f40f-c952-475f-a761-75c433c4ef2a",
+      "company_name": "UrbanEye Analytics",
+      "rank": 2,
+      "overall_score": 62.046,
+      "component_scores": {
+        "semantic_similarity": 65.273,
+        "technology_match": 40.0,
+        "domain_match": 80.0,
+        "experience_score": 50.0,
+        "readiness_score": 78.0
+      },
+      "reasons": [
+        "The startup's stated capabilities and past work closely match the problem statement in overall meaning, not just keywords.",
+        "Covers 2 of 4 desired technologies: Computer Vision, IoT Sensors.",
+        "Core capability directly tagged in the 'smart-mobility' domain.",
+        "Prior government-sector deployment in this exact domain (Smart Traffic Signal AI \u2014 Mumbai Traffic Police)."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: GIS Mapping, Deep Learning."
+      ]
+    },
+    {
+      "startup_id": "583d771d-d58c-4c00-8914-72ed15fdf51e",
+      "company_name": "GeoMap Robotics",
+      "rank": 3,
+      "overall_score": 49.178,
+      "component_scores": {
+        "semantic_similarity": 46.936,
+        "technology_match": 25.0,
+        "domain_match": 100.0,
+        "experience_score": 20.0,
+        "readiness_score": 65.0
+      },
+      "reasons": [
+        "Covers 1 of 4 desired technologies: GIS Mapping.",
+        "Core capability directly tagged in the 'smart-mobility' domain.",
+        "1 relevant past project(s) in this domain, though not yet with a government client."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: Computer Vision, IoT Sensors, Deep Learning."
+      ]
+    },
+    {
+      "startup_id": "dac5ccb2-53ae-4e16-830e-eca758947ac7",
+      "company_name": "CleanLoop Robotics",
+      "rank": 4,
+      "overall_score": 37.669,
+      "component_scores": {
+        "semantic_similarity": 50.483,
+        "technology_match": 25.0,
+        "domain_match": 0.0,
+        "experience_score": 20.0,
+        "readiness_score": 80.0
+      },
+      "reasons": [
+        "Covers 1 of 4 desired technologies: Computer Vision.",
+        "High pilot-readiness score (80/100) suggesting operational maturity."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: IoT Sensors, GIS Mapping, Deep Learning.",
+        "No prior capability or project specifically in 'smart-mobility'."
+      ]
+    },
+    {
+      "startup_id": "8ec3eff8-1249-436e-ba00-16fc6e17b5cc",
+      "company_name": "MediTriage AI",
+      "rank": 5,
+      "overall_score": 33.012,
+      "component_scores": {
+        "semantic_similarity": 48.033,
+        "technology_match": 0.0,
+        "domain_match": 0.0,
+        "experience_score": 20.0,
+        "readiness_score": 88.0
+      },
+      "reasons": [
+        "High pilot-readiness score (88/100) suggesting operational maturity.",
+        "Reasonable overall alignment with the challenge."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: Computer Vision, IoT Sensors, GIS Mapping, Deep Learning.",
+        "No prior capability or project specifically in 'smart-mobility'."
+      ]
+    },
+    {
+      "startup_id": "4b1d095a-9995-4128-a30d-429b641241ce",
+      "company_name": "AgriSense Technologies",
+      "rank": 6,
+      "overall_score": 29.421,
+      "component_scores": {
+        "semantic_similarity": 40.346,
+        "technology_match": 0.0,
+        "domain_match": 0.0,
+        "experience_score": 20.0,
+        "readiness_score": 82.0
+      },
+      "reasons": [
+        "High pilot-readiness score (82/100) suggesting operational maturity.",
+        "Reasonable overall alignment with the challenge."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: Computer Vision, IoT Sensors, GIS Mapping, Deep Learning.",
+        "No prior capability or project specifically in 'smart-mobility'."
+      ]
+    },
+    {
+      "startup_id": "0470d42f-6466-4201-8ecc-20e9e15ab4b4",
+      "company_name": "CyberShield Analytics",
+      "rank": 7,
+      "overall_score": 29.31,
+      "component_scores": {
+        "semantic_similarity": 39.17,
+        "technology_match": 0.0,
+        "domain_match": 0.0,
+        "experience_score": 20.0,
+        "readiness_score": 84.0
+      },
+      "reasons": [
+        "High pilot-readiness score (84/100) suggesting operational maturity.",
+        "Reasonable overall alignment with the challenge."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: Computer Vision, IoT Sensors, GIS Mapping, Deep Learning.",
+        "No prior capability or project specifically in 'smart-mobility'."
+      ]
+    },
+    {
+      "startup_id": "81d844a5-7c43-4197-bb14-be0ba7ebde16",
+      "company_name": "FarmVision AI",
+      "rank": 8,
+      "overall_score": 27.712,
+      "component_scores": {
+        "semantic_similarity": 39.892,
+        "technology_match": 20.0,
+        "domain_match": 0.0,
+        "experience_score": 5.0,
+        "readiness_score": 60.0
+      },
+      "reasons": [
+        "Covers 1 of 4 desired technologies: Computer Vision.",
+        "Reasonable overall alignment with the challenge."
+      ],
+      "gaps": [
+        "No demonstrated capability yet in: IoT Sensors, GIS Mapping, Deep Learning.",
+        "No prior capability or project specifically in 'smart-mobility'."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+# INNOVATE-GOV — Python backend (FastAPI)
+# Python 3.10 / 3.11
+#
+# This replaces the Spring Boot backend. It also absorbs the former standalone
+# ai-service, so the AI/ML dependencies live here too — the matching pipeline
+# runs in-process against the same SQLAlchemy session rather than over HTTP.
+
+# --- web framework -------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20          # multipart/form-data for document upload
+
+# --- data layer ----------------------------------------------------------
+SQLAlchemy==2.0.36
+psycopg[binary]==3.2.3
+alembic==1.14.0
+
+# --- validation / settings ----------------------------------------------
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# --- security ------------------------------------------------------------
+# PyJWT for HS256 tokens matching the Spring JwtService claim set.
+# bcrypt directly (not passlib): passlib 1.7.4 is unmaintained and breaks
+# against bcrypt >= 4.1. bcrypt verifies the existing seeded $2b$10$ hashes.
+PyJWT==2.10.1
+bcrypt==4.2.1
+
+# --- AI / ML (migrated from ai-service) ---------------------------------
+numpy==2.2.1
+sentence-transformers==3.3.1      # all-MiniLM-L6-v2, already cached locally
+httpx==0.28.1                     # optional OpenAI-compatible provider path
+
+# --- tests ---------------------------------------------------------------
+pytest==8.3.4

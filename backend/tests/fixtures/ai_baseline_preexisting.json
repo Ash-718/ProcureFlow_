@@ -1,0 +1,293 @@
+{
+  "challenges": [
+    {
+      "id": "68dbd66f-e465-457e-95d2-f84f3bb08c89",
+      "title": "AI-Based Pothole & Road Damage Detection System",
+      "status": "MATCHING",
+      "embedding_model": "local-fallback",
+      "dim": 384
+    },
+    {
+      "id": "e06d1968-938c-4da1-ab34-f6872322cde8",
+      "title": "AI Triage & Early Warning System for Rural Health Centers",
+      "status": "PUBLISHED",
+      "embedding_model": null,
+      "dim": null
+    },
+    {
+      "id": "aa815072-95c9-4a08-b173-119d681f5cb0",
+      "title": "Cybersecurity Threat Monitoring for Government Portals",
+      "status": "CLOSED",
+      "embedding_model": null,
+      "dim": null
+    },
+    {
+      "id": "2455b0c6-3e88-4589-9103-2050dad9cbbe",
+      "title": "Digital Waste Segregation & Collection Optimization",
+      "status": "CLOSED",
+      "embedding_model": null,
+      "dim": null
+    },
+    {
+      "id": "70c11a7a-3158-400b-a420-93d48d1ff2b8",
+      "title": "Financial Inclusion Platform for Rural Cooperative Banks",
+      "status": "PUBLISHED",
+      "embedding_model": null,
+      "dim": null
+    },
+    {
+      "id": "ab0bde3c-b3f5-4994-88d3-68ccd2378acc",
+      "title": "Smart Crop Advisory Platform for Small Farmers",
+      "status": "PUBLISHED",
+      "embedding_model": null,
+      "dim": null
+    }
+  ],
+  "pothole_challenge_id": "68dbd66f-e465-457e-95d2-f84f3bb08c89",
+  "roadsense_startup_id": "eac7a065-c870-4240-8b2f-fe3579f4576e",
+  "pothole_embedding_fp": "6117d114f17ba0c4",
+  "roadsense_embedding_fp": "695b71ede1317c1f",
+  "pothole_embedding_head": [
+    -0.06275813281536102,
+    -0.026419639587402344,
+    0.11663389950990677,
+    0.025524558499455452,
+    0.015425149351358414
+  ],
+  "match_results": [
+    {
+      "rank": 1,
+      "company_name": "RoadSense AI",
+      "overall_score": 79.086,
+      "semantic_similarity_score": 76.674,
+      "technology_match_score": 70.0,
+      "domain_match_score": 100.0,
+      "experience_score": 70.0,
+      "readiness_score": 85.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: IoT Sensors."
+        ],
+        "reasons": [
+          "The startup's stated capabilities and past work closely match the problem statement in overall meaning, not just keywords.",
+          "Covers 3 of 4 desired technologies: Computer Vision, GIS Mapping, Deep Learning.",
+          "Core capability directly tagged in the 'smart-mobility' domain.",
+          "Prior government-sector deployment in this exact domain (Pothole Detection Pilot \u2014 Pune Municipal Corporation)."
+        ],
+        "startup_name": "RoadSense AI",
+        "component_scores": {
+          "domain_match": 100.0,
+          "readiness_score": 85.0,
+          "experience_score": 70.0,
+          "technology_match": 70.0,
+          "semantic_similarity": 76.674
+        }
+      }
+    },
+    {
+      "rank": 2,
+      "company_name": "UrbanEye Analytics",
+      "overall_score": 62.046,
+      "semantic_similarity_score": 65.273,
+      "technology_match_score": 40.0,
+      "domain_match_score": 80.0,
+      "experience_score": 50.0,
+      "readiness_score": 78.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: GIS Mapping, Deep Learning."
+        ],
+        "reasons": [
+          "The startup's stated capabilities and past work closely match the problem statement in overall meaning, not just keywords.",
+          "Covers 2 of 4 desired technologies: Computer Vision, IoT Sensors.",
+          "Core capability directly tagged in the 'smart-mobility' domain.",
+          "Prior government-sector deployment in this exact domain (Smart Traffic Signal AI \u2014 Mumbai Traffic Police)."
+        ],
+        "startup_name": "UrbanEye Analytics",
+        "component_scores": {
+          "domain_match": 80.0,
+          "readiness_score": 78.0,
+          "experience_score": 50.0,
+          "technology_match": 40.0,
+          "semantic_similarity": 65.273
+        }
+      }
+    },
+    {
+      "rank": 3,
+      "company_name": "GeoMap Robotics",
+      "overall_score": 49.178,
+      "semantic_similarity_score": 46.936,
+      "technology_match_score": 25.0,
+      "domain_match_score": 100.0,
+      "experience_score": 20.0,
+      "readiness_score": 65.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: Computer Vision, IoT Sensors, Deep Learning."
+        ],
+        "reasons": [
+          "Covers 1 of 4 desired technologies: GIS Mapping.",
+          "Core capability directly tagged in the 'smart-mobility' domain.",
+          "1 relevant past project(s) in this domain, though not yet with a government client."
+        ],
+        "startup_name": "GeoMap Robotics",
+        "component_scores": {
+          "domain_match": 100.0,
+          "readiness_score": 65.0,
+          "experience_score": 20.0,
+          "technology_match": 25.0,
+          "semantic_similarity": 46.936
+        }
+      }
+    },
+    {
+      "rank": 4,
+      "company_name": "CleanLoop Robotics",
+      "overall_score": 37.669,
+      "semantic_similarity_score": 50.483,
+      "technology_match_score": 25.0,
+      "domain_match_score": 0.0,
+      "experience_score": 20.0,
+      "readiness_score": 80.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: IoT Sensors, GIS Mapping, Deep Learning.",
+          "No prior capability or project specifically in 'smart-mobility'."
+        ],
+        "reasons": [
+          "Covers 1 of 4 desired technologies: Computer Vision.",
+          "High pilot-readiness score (80/100) suggesting operational maturity."
+        ],
+        "startup_name": "CleanLoop Robotics",
+        "component_scores": {
+          "domain_match": 0.0,
+          "readiness_score": 80.0,
+          "experience_score": 20.0,
+          "technology_match": 25.0,
+          "semantic_similarity": 50.483
+        }
+      }
+    },
+    {
+      "rank": 5,
+      "company_name": "MediTriage AI",
+      "overall_score": 33.012,
+      "semantic_similarity_score": 48.033,
+      "technology_match_score": 0.0,
+      "domain_match_score": 0.0,
+      "experience_score": 20.0,
+      "readiness_score": 88.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: Computer Vision, IoT Sensors, GIS Mapping, Deep Learning.",
+          "No prior capability or project specifically in 'smart-mobility'."
+        ],
+        "reasons": [
+          "High pilot-readiness score (88/100) suggesting operational maturity.",
+          "Reasonable overall alignment with the challenge."
+        ],
+        "startup_name": "MediTriage AI",
+        "component_scores": {
+          "domain_match": 0.0,
+          "readiness_score": 88.0,
+          "experience_score": 20.0,
+          "technology_match": 0.0,
+          "semantic_similarity": 48.033
+        }
+      }
+    },
+    {
+      "rank": 6,
+      "company_name": "AgriSense Technologies",
+      "overall_score": 29.421,
+      "semantic_similarity_score": 40.346,
+      "technology_match_score": 0.0,
+      "domain_match_score": 0.0,
+      "experience_score": 20.0,
+      "readiness_score": 82.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: Computer Vision, IoT Sensors, GIS Mapping, Deep Learning.",
+          "No prior capability or project specifically in 'smart-mobility'."
+        ],
+        "reasons": [
+          "High pilot-readiness score (82/100) suggesting operational maturity.",
+          "Reasonable overall alignment with the challenge."
+        ],
+        "startup_name": "AgriSense Technologies",
+        "component_scores": {
+          "domain_match": 0.0,
+          "readiness_score": 82.0,
+          "experience_score": 20.0,
+          "technology_match": 0.0,
+          "semantic_similarity": 40.346
+        }
+      }
+    },
+    {
+      "rank": 7,
+      "company_name": "CyberShield Analytics",
+      "overall_score": 29.31,
+      "semantic_similarity_score": 39.17,
+      "technology_match_score": 0.0,
+      "domain_match_score": 0.0,
+      "experience_score": 20.0,
+      "readiness_score": 84.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: Computer Vision, IoT Sensors, GIS Mapping, Deep Learning.",
+          "No prior capability or project specifically in 'smart-mobility'."
+        ],
+        "reasons": [
+          "High pilot-readiness score (84/100) suggesting operational maturity.",
+          "Reasonable overall alignment with the challenge."
+        ],
+        "startup_name": "CyberShield Analytics",
+        "component_scores": {
+          "domain_match": 0.0,
+          "readiness_score": 84.0,
+          "experience_score": 20.0,
+          "technology_match": 0.0,
+          "semantic_similarity": 39.17
+        }
+      }
+    },
+    {
+      "rank": 8,
+      "company_name": "FarmVision AI",
+      "overall_score": 27.712,
+      "semantic_similarity_score": 39.892,
+      "technology_match_score": 20.0,
+      "domain_match_score": 0.0,
+      "experience_score": 5.0,
+      "readiness_score": 60.0,
+      "ai_provider": "local-fallback",
+      "explanation_json": {
+        "gaps": [
+          "No demonstrated capability yet in: IoT Sensors, GIS Mapping, Deep Learning.",
+          "No prior capability or project specifically in 'smart-mobility'."
+        ],
+        "reasons": [
+          "Covers 1 of 4 desired technologies: Computer Vision.",
+          "Reasonable overall alignment with the challenge."
+        ],
+        "startup_name": "FarmVision AI",
+        "component_scores": {
+          "domain_match": 0.0,
+          "readiness_score": 60.0,
+          "experience_score": 5.0,
+          "technology_match": 20.0,
+          "semantic_similarity": 39.892
+        }
+      }
+    }
+  ]
+}
