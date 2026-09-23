@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.mypy_cache/
+api/.venv/
+.venv/
+venv/
+ENV/
+
+# Environment files and credentials (CRITICAL: NEVER COMMIT SECRETS)
+.env
+.env.*
+!.env.example
+*.env
+web/.env
+web/.env.*
+!web/.env.example
+api/.env
+api/.env.*
+!api/.env.example
+
+# Local PostgreSQL cluster & logs
+pgdata/
+db/
+localdb/
+*.log
+*.sqlite
+*.sqlite3
+
+# Node / frontend
+node_modules/
+web/node_modules/
+web/dist/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

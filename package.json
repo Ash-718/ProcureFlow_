@@ -1,0 +1,19 @@
+{
+  "name": "procureflow",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Startup-friendly public procurement platform - SIH26136 prototype",
+  "scripts": {
+    "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:api": "cd api && .venv\\Scripts\\python -m uvicorn app.main:app --reload --port 8000",
+    "dev:web": "cd web && npm run dev",
+    "db:migrate": "cd api && .venv\\Scripts\\python -m alembic upgrade head",
+    "db:seed": "cd api && .venv\\Scripts\\python -m scripts.seed",
+    "db:reset": "cd api && .venv\\Scripts\\python -m scripts.reset_db",
+    "test": "cd api && .venv\\Scripts\\python -m pytest",
+    "install:web": "cd web && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
