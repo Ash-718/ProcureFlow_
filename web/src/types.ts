@@ -5,6 +5,7 @@ export interface Challenge {
   title: string
   description_raw: string
   department_id: number
+  department?: { id: number; name: string; code: string; district?: string | null } | null
   value: string | null
   criticality: string | null
   innovation_potential: string | null

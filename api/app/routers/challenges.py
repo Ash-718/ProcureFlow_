@@ -23,6 +23,7 @@ from app.schemas_challenge import (
     AnalyzeRequest,
     AnalyzeResponse,
     ApproveRequest,
+    CancelRequest,
     ChallengeCreate,
     ChallengeDetail,
     ChallengeOut,
@@ -423,6 +424,36 @@ def publish_challenge(
         entity_type="challenge",
         entity_id=challenge.id,
         details={"tier": decision.tier.value, "bid_window_days": bid_window},
+    )
+    db.commit()
+    db.refresh(challenge)
+    return challenge
+
+
+@router.post("/{challenge_id}/cancel", response_model=ChallengeDetail)
+def cancel_challenge(
+    challenge_id: int,
+    payload: CancelRequest | None = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(officer_or_admin),
+) -> Challenge:
+    """Officer cancellation of a challenge."""
+    challenge = _get(db, challenge_id)
+    if challenge.status in (ChallengeStatus.COMPLETED, ChallengeStatus.CANCELLED):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"A challenge in status {challenge.status.value} cannot be cancelled.",
+        )
+    reason = payload.reason if (payload and payload.reason) else "Cancelled by department officer."
+    challenge.status = ChallengeStatus.CANCELLED
+    audit.record(
+        db,
+        action="CHALLENGE_CANCELLED",
+        reason=reason,
+        actor=current_user,
+        entity_type="challenge",
+        entity_id=challenge.id,
+        details={"previous_status": challenge.status.value},
     )
     db.commit()
     db.refresh(challenge)

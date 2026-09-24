@@ -33,10 +33,86 @@ const DECLINE_CODES = [
   'INCOMPLETE_SUBMISSION',
 ]
 
+function formatRupees(val: string | number | null | undefined): string {
+  if (!val) return '—'
+  const num = typeof val === 'string' ? parseFloat(val) : val
+  if (isNaN(num)) return '—'
+  if (num >= 10000000) {
+    return `₹${(num / 10000000).toFixed(2)} Cr`
+  }
+  if (num >= 100000) {
+    return `₹${(num / 100000).toFixed(1)} Lakh`
+  }
+  return `₹${num.toLocaleString('en-IN')}`
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'PUBLISHED':
+      return <Badge variant="success">PUBLISHED</Badge>
+    case 'APPROVED':
+      return <Badge variant="secondary">APPROVED</Badge>
+    case 'EVALUATION':
+      return <Badge variant="warning">EVALUATION</Badge>
+    case 'PILOT':
+      return <Badge variant="default">PILOT</Badge>
+    case 'COMPLETED':
+      return <Badge variant="success">COMPLETED</Badge>
+    case 'CANCELLED':
+      return <Badge variant="destructive">CANCELLED</Badge>
+    case 'ANALYZED':
+      return <Badge variant="outline">ANALYZED</Badge>
+    case 'DRAFT':
+    default:
+      return <Badge variant="outline">DRAFT</Badge>
+  }
+}
+
+function getTierBadge(tier: string | null) {
+  if (!tier) return null
+  switch (tier) {
+    case 'SMALL':
+      return (
+        <Badge
+          variant="outline"
+          className="border-sky-500/40 bg-sky-500/10 font-medium text-sky-700 dark:text-sky-300"
+        >
+          SMALL
+        </Badge>
+      )
+    case 'MEDIUM':
+      return (
+        <Badge
+          variant="outline"
+          className="border-indigo-500/40 bg-indigo-500/10 font-medium text-indigo-700 dark:text-indigo-300"
+        >
+          MEDIUM
+        </Badge>
+      )
+    case 'LARGE':
+      return (
+        <Badge
+          variant="outline"
+          className="border-purple-500/40 bg-purple-500/10 font-semibold text-purple-700 dark:text-purple-300"
+        >
+          LARGE
+        </Badge>
+      )
+    default:
+      return <Badge variant="outline">{tier}</Badge>
+  }
+}
+
 export function GovernmentDashboard() {
   const [challenges, setChallenges] = useState<Challenge[]>([])
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  // Filters
+  const [tierFilter, setTierFilter] = useState<'ALL' | 'SMALL' | 'MEDIUM' | 'LARGE'>('ALL')
+  const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [completenessFilter, setCompletenessFilter] = useState<'ALL' | 'COMPLETE' | 'INCOMPLETE'>('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
 
   function load() {
     api<Challenge[]>('/challenges')
@@ -49,40 +125,210 @@ export function GovernmentDashboard() {
 
   useEffect(load, [])
 
+  const filteredChallenges = challenges.filter((c) => {
+    if (tierFilter !== 'ALL' && c.tier !== tierFilter) return false
+    if (statusFilter !== 'ALL' && c.status !== statusFilter) return false
+    const isIncomplete = c.missing_fields && c.missing_fields.length > 0
+    if (completenessFilter === 'COMPLETE' && isIncomplete) return false
+    if (completenessFilter === 'INCOMPLETE' && !isIncomplete) return false
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const matchTitle = c.title.toLowerCase().includes(q)
+      const matchCategory = c.category?.toLowerCase().includes(q)
+      const matchDistrict = c.district?.toLowerCase().includes(q)
+      const matchDept =
+        c.department?.name.toLowerCase().includes(q) ||
+        c.department?.code.toLowerCase().includes(q)
+      if (!matchTitle && !matchCategory && !matchDistrict && !matchDept) return false
+    }
+    return true
+  })
+
+  // Count summaries
+  const tierCounts = {
+    SMALL: challenges.filter((c) => c.tier === 'SMALL').length,
+    MEDIUM: challenges.filter((c) => c.tier === 'MEDIUM').length,
+    LARGE: challenges.filter((c) => c.tier === 'LARGE').length,
+  }
+  const statusCounts = {
+    DRAFT: challenges.filter((c) => c.status === 'DRAFT').length,
+    ANALYZED: challenges.filter((c) => c.status === 'ANALYZED').length,
+    APPROVED: challenges.filter((c) => c.status === 'APPROVED').length,
+    PUBLISHED: challenges.filter((c) => c.status === 'PUBLISHED').length,
+    EVALUATION: challenges.filter((c) => c.status === 'EVALUATION').length,
+    PILOT: challenges.filter((c) => c.status === 'PILOT').length,
+    COMPLETED: challenges.filter((c) => c.status === 'COMPLETED').length,
+    CANCELLED: challenges.filter((c) => c.status === 'CANCELLED').length,
+  }
+  const completenessCounts = {
+    COMPLETE: challenges.filter((c) => !c.missing_fields || c.missing_fields.length === 0).length,
+    INCOMPLETE: challenges.filter((c) => c.missing_fields && c.missing_fields.length > 0).length,
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold">Department dashboard</h1>
         <p className="text-sm text-muted-foreground">
-          Post a problem in plain language, review what the analyzer structured, and decide.
+          Post a problem in plain language, review what the analyzer structured, and track procurement through all lifecycle stages.
         </p>
       </div>
 
       <ErrorNote error={error} />
       <NewChallenge onCreated={load} />
 
-      <Section title="Challenges" description="Everything this department has raised.">
-        {challenges.length === 0 ? (
-          <Empty>No challenges yet. Create one above.</Empty>
-        ) : (
-          <div className="space-y-2">
-            {challenges.map((challenge) => (
-              <button
-                key={challenge.id}
-                type="button"
-                onClick={() => setSelectedId(challenge.id)}
-                className={`flex w-full flex-wrap items-center gap-2 rounded-md border p-3 text-left text-sm ${
-                  selectedId === challenge.id ? 'border-primary bg-accent' : 'border-border'
-                }`}
+      <Section
+        title={`Challenges (${filteredChallenges.length} of ${challenges.length})`}
+        description="Comprehensive demo repository covering all procurement scales, tiers, and statuses."
+      >
+        {/* Filters and Search Bar */}
+        <div className="space-y-3 pb-3">
+          <Input
+            placeholder="Search by title, department, district, or category..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+          {/* Tier Filters */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-medium text-muted-foreground">Tier:</span>
+            {(['ALL', 'SMALL', 'MEDIUM', 'LARGE'] as const).map((tier) => (
+              <Button
+                key={tier}
+                size="sm"
+                variant={tierFilter === tier ? 'default' : 'outline'}
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setTierFilter(tier)}
               >
-                <span className="font-medium">{challenge.title}</span>
-                <Badge variant="outline">{challenge.status}</Badge>
-                {challenge.tier && <Badge variant="secondary">{challenge.tier}</Badge>}
-                {challenge.missing_fields && challenge.missing_fields.length > 0 && (
-                  <Badge variant="warning">{challenge.missing_fields.length} missing</Badge>
-                )}
-              </button>
+                {tier} {tier !== 'ALL' && `(${tierCounts[tier]})`}
+              </Button>
             ))}
+          </div>
+
+          {/* Status Filters */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-medium text-muted-foreground">Status:</span>
+            {[
+              'ALL',
+              'DRAFT',
+              'ANALYZED',
+              'APPROVED',
+              'PUBLISHED',
+              'EVALUATION',
+              'PILOT',
+              'COMPLETED',
+              'CANCELLED',
+            ].map((st) => (
+              <Button
+                key={st}
+                size="sm"
+                variant={statusFilter === st ? 'default' : 'outline'}
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setStatusFilter(st)}
+              >
+                {st} {st !== 'ALL' && `(${statusCounts[st as keyof typeof statusCounts] || 0})`}
+              </Button>
+            ))}
+          </div>
+
+          {/* Completeness Filters */}
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-medium text-muted-foreground">Completeness:</span>
+            {(['ALL', 'COMPLETE', 'INCOMPLETE'] as const).map((comp) => (
+              <Button
+                key={comp}
+                size="sm"
+                variant={completenessFilter === comp ? 'default' : 'outline'}
+                className="h-7 px-2.5 text-xs"
+                onClick={() => setCompletenessFilter(comp)}
+              >
+                {comp === 'ALL'
+                  ? 'All'
+                  : comp === 'COMPLETE'
+                  ? `Complete (${completenessCounts.COMPLETE})`
+                  : `Incomplete (${completenessCounts.INCOMPLETE})`}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {filteredChallenges.length === 0 ? (
+          <Empty>No challenges match the active filters.</Empty>
+        ) : (
+          <div className="space-y-2.5">
+            {filteredChallenges.map((challenge) => {
+              const isSelected = selectedId === challenge.id
+              const spec = (challenge.structured_spec ?? {}) as Record<string, unknown>
+              const isIncomplete =
+                challenge.missing_fields && challenge.missing_fields.length > 0
+              return (
+                <button
+                  key={challenge.id}
+                  type="button"
+                  onClick={() => setSelectedId(challenge.id)}
+                  className={`flex w-full flex-col gap-2 rounded-lg border p-3.5 text-left transition-all ${
+                    isSelected
+                      ? 'border-primary bg-accent/60 shadow-sm ring-1 ring-primary'
+                      : 'border-border bg-card hover:border-primary/50 hover:bg-accent/20'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-semibold text-foreground">{challenge.title}</span>
+                      {getStatusBadge(challenge.status)}
+                      {getTierBadge(challenge.tier)}
+                      {isIncomplete ? (
+                        <Badge variant="warning">{challenge.missing_fields?.length} missing</Badge>
+                      ) : (
+                        <Badge variant="success">Complete</Badge>
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold text-primary">
+                      {formatRupees(challenge.value)}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    <span>
+                      Dept:{' '}
+                      <strong className="font-medium text-foreground">
+                        {challenge.department?.code || challenge.category || 'WSSD'}
+                      </strong>
+                    </span>
+                    <span>
+                      District:{' '}
+                      <strong className="font-medium text-foreground">
+                        {challenge.district || 'Not specified'}
+                      </strong>
+                    </span>
+                    <span>
+                      Timeline:{' '}
+                      <strong className="font-medium text-foreground">
+                        {(spec.timeline as string) || 'Not set'}
+                      </strong>
+                    </span>
+                    <span>
+                      Criticality:{' '}
+                      <strong className="font-medium text-foreground">
+                        {challenge.criticality || 'Not set'}
+                      </strong>
+                    </span>
+                    <span>
+                      Innovation:{' '}
+                      <strong className="font-medium text-foreground">
+                        {challenge.innovation_potential || 'Not set'}
+                      </strong>
+                    </span>
+                    <span>
+                      Site:{' '}
+                      <strong className="font-medium text-foreground">
+                        {challenge.requires_onsite ? 'On-site required' : 'Remote'}
+                      </strong>
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         )}
       </Section>
@@ -276,21 +522,61 @@ function ChallengeDetail({
       <Section
         title={challenge.title}
         description={challenge.description_raw}
-        action={<Badge variant="outline">{challenge.status}</Badge>}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            {getStatusBadge(challenge.status)}
+            {getTierBadge(challenge.tier)}
+            {challenge.missing_fields && challenge.missing_fields.length > 0 ? (
+              <Badge variant="warning">{challenge.missing_fields.length} missing</Badge>
+            ) : (
+              <Badge variant="success">Complete</Badge>
+            )}
+          </div>
+        }
       >
         <div className="grid gap-2 sm:grid-cols-2">
-          <Field label="Budget" value={challenge.value} />
-          <Field label="Timeline" value={(spec.timeline as string) ?? null} />
-          <Field label="District" value={challenge.district} />
-          <Field label="Criticality" value={challenge.criticality} />
-          <Field label="Innovation potential" value={challenge.innovation_potential} />
-          <Field label="Requires on-site work" value={challenge.requires_onsite ? 'Yes' : 'No'} />
+          <Field
+            label="Department"
+            value={
+              challenge.department
+                ? `${challenge.department.name} (${challenge.department.code})`
+                : `Department #${challenge.department_id}`
+            }
+          />
+          <Field
+            label="Budget"
+            value={
+              challenge.value
+                ? `${formatRupees(challenge.value)} (₹${parseFloat(challenge.value).toLocaleString('en-IN')})`
+                : 'Not specified'
+            }
+          />
+          <Field label="Timeline" value={(spec.timeline as string) ?? 'Not specified'} />
+          <Field label="District / Location" value={challenge.district ?? 'Not specified'} />
+          <Field label="Category" value={challenge.category ?? 'Not specified'} />
+          <Field label="Criticality" value={challenge.criticality ?? 'Not specified'} />
+          <Field
+            label="Innovation potential"
+            value={challenge.innovation_potential ?? 'Not specified'}
+          />
+          <Field
+            label="Requires on-site work"
+            value={challenge.requires_onsite ? 'Yes (On-site)' : 'No (Remote)'}
+          />
         </div>
         <div className="mt-3">
           <MissingFields fields={challenge.missing_fields} />
         </div>
         <ErrorNote error={error} />
       </Section>
+
+      {challenge.status !== 'COMPLETED' && challenge.status !== 'CANCELLED' && (
+        <CancelChallengeAction
+          challengeId={challenge.id}
+          busy={busy}
+          onCancelled={() => act(async () => {})}
+        />
+      )}
 
       {challenge.missing_fields && challenge.missing_fields.length > 0 && (
         <FillGaps challengeId={challenge.id} onSaved={() => act(async () => {})} />
@@ -783,5 +1069,80 @@ function PilotPanel({
         </div>
       )}
     </Section>
+  )
+}
+
+function CancelChallengeAction({
+  challengeId,
+  busy,
+  onCancelled,
+}: {
+  challengeId: number
+  busy: boolean
+  onCancelled: () => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  async function cancel() {
+    setError(null)
+    try {
+      await api(`/challenges/${challengeId}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason.trim() || 'Cancelled by department officer.' }),
+      })
+      setOpen(false)
+      onCancelled()
+    } catch (err) {
+      setError(describeError(err))
+    }
+  }
+
+  return (
+    <div className="rounded-md border border-border p-3">
+      {!open ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-medium">Cancel procurement challenge</p>
+            <p className="text-xs text-muted-foreground">
+              Halts further bidding or evaluation and transitions the challenge to CANCELLED.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive hover:bg-destructive/10"
+            disabled={busy}
+            onClick={() => setOpen(true)}
+          >
+            Cancel challenge
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div>
+            <p className="text-sm font-semibold text-destructive">Confirm cancellation</p>
+            <p className="text-xs text-muted-foreground">
+              Provide an audit reason for cancelling this procurement process.
+            </p>
+          </div>
+          <Input
+            placeholder="Reason for cancellation (e.g. Budget reallocation, municipal merger)"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+          />
+          <ErrorNote error={error} />
+          <div className="flex gap-2">
+            <Button size="sm" variant="destructive" disabled={busy} onClick={cancel}>
+              Confirm cancellation
+            </Button>
+            <Button size="sm" variant="outline" disabled={busy} onClick={() => setOpen(false)}>
+              Back
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

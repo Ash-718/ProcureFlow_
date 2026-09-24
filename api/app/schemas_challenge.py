@@ -8,6 +8,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.enums import ChallengeStatus, KpiDirection, Level, Tier
+from app.schemas import DepartmentBrief
 
 
 class AnalyzeRequest(BaseModel):
@@ -106,6 +107,12 @@ class ApproveRequest(BaseModel):
     note: str = Field(min_length=1, description="Why the officer is approving this spec.")
 
 
+class CancelRequest(BaseModel):
+    """Officer cancellation of a challenge."""
+
+    reason: str = Field(default="Cancelled by department officer.", description="Reason for cancellation.")
+
+
 class ChallengeOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -113,6 +120,7 @@ class ChallengeOut(BaseModel):
     title: str
     description_raw: str
     department_id: int
+    department: DepartmentBrief | None = None
     value: Decimal | None = None
     criticality: Level | None = None
     innovation_potential: Level | None = None
