@@ -8,6 +8,7 @@ live in the procurement_rules table and are read through the rules service.
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repository root, i.e. the directory that holds .env
@@ -24,6 +25,16 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/procureflow"
     db_name: str = "procureflow"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                return "postgresql+psycopg://" + v[len("postgres://"):]
+            if v.startswith("postgresql://") and not v.startswith("postgresql+psycopg://"):
+                return "postgresql+psycopg://" + v[len("postgresql://"):]
+        return v
 
     jwt_secret: str = "dev-secret-change-me"
     jwt_algorithm: str = "HS256"
